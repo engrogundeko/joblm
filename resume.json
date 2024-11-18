@@ -1,0 +1,193 @@
+{
+    "personalschema": {
+        "full_name": "AZEEZ ADEBOLA OGUNDEKO",
+        "phone_number": "+234 813 129 0362",
+        "email_address": "azeezogundeko19@gmail.com",
+        "linkedin_profile": "linkedin.com/in/Abdulazeez-ogundeko-3966a723b",
+        "professional_title": "Backend Developer Intern"
+    },
+    "educationschema": {
+        "education": [
+            {
+                "educationDetails": {
+                    "degree": "Bachelor of Science",
+                    "discipline": "Electronics and Computer Engineering",
+                    "institution": "Lagos State University, Epe campus",
+                    "graduation_date": "2024",
+                    "achievements": [
+                        "First Class Honours",
+                        "Exemplary leadership Award in Lagos state University, Epe campus (2024)",
+                        "Dangote Scholarship Scholar (2024)",
+                        "Presidential Award - NUESA (2024)"
+                    ]
+                }
+            }
+        ]
+    },
+    "publicationschema": {
+        "volunteer": [
+            {
+                "title": "Exemplary leadership Award in Lagos state University, Epe campus",
+                "authors": "N/A",
+                "date": "2024",
+                "conference": "Lagos state University, Epe campus",
+                "link": "Link 2024"
+            },
+            {
+                "title": "Dangote Scholarship",
+                "authors": "N/A",
+                "date": "2024",
+                "conference": "Dangote Foundation",
+                "link": "N/A"
+            },
+            {
+                "title": "Presidential Award - NUESA",
+                "authors": "N/A",
+                "date": "2024",
+                "conference": "NUESA",
+                "link": "N/A"
+            },
+            {
+                "title": "Lagos State Scholarship (LSSB)",
+                "authors": "N/A",
+                "date": "2023",
+                "conference": "Lagos State Scholarship Board",
+                "link": "N/A"
+            },
+            {
+                "title": "Federal Scholarship (FSB)",
+                "authors": "N/A",
+                "date": "2023",
+                "conference": "Federal Scholarship Board",
+                "link": "N/A"
+            },
+            {
+                "title": "Lagos State University Scholar",
+                "authors": "N/A",
+                "date": "2023",
+                "conference": "Lagos State University",
+                "link": "N/A"
+            },
+            {
+                "title": "Design and Construction of an AI Invigilating System",
+                "authors": "N/A",
+                "date": "N/A",
+                "conference": "N/A",
+                "link": "Github Link"
+            }
+        ]
+    },
+    "workexperienceschema": {
+        "work_experience": [
+            {
+                "job_title": "Backend Developer Intern",
+                "company": "AFEX, Ibadan",
+                "location": "Ibadan, Nigeria",
+                "date": "2023",
+                "responsibilities": "Designing, implementing, and maintaining server-side applications and infrastructure. Developing RESTful APIs to support frontend features and third-party integrations. Writing clean, efficient, and well-documented code using programming languages such as Python. Optimising application performance and scalability through database tuning, caching strategies, and code refactoring. Collaborating with cross-functional teams, including frontend developers, designers, and product managers, to deliver high-quality software solutions. Troubleshooting and debugging production issues to ensure system reliability and uptime.",
+                "achievements": "N/A",
+                "technology_used": "Python"
+            }
+        ]
+    },
+    "volunteerschema": {
+        "volunteer": [
+            {
+                "name": "AMIR (PRESIDENT)",
+                "position": "President",
+                "dates": "2023-2024",
+                "responsibilities": "Organised programs for students, Managed a team of volunteers for the execution of tasks, Maintained effective communication with stakeholders via reports and letters, Oversee the activities of the branch."
+            },
+            {
+                "name": "ASST GENERAL SECRETARY",
+                "position": "Assistant General Secretary",
+                "dates": "2022-2023",
+                "responsibilities": "Preparation and submission of letters, Prepared the minutes for meetings, Maintained effective communication with stakeholders via reports and letters, Maintained effective communication with school management via reports and letters, Managed a team of volunteers for the execution of tasks."
+            }
+        ]
+    },
+    "interestschema": {
+        "interest": [
+            {
+                "interest": [
+                    "Team and Time Management",
+                    "Communication",
+                    "Leadership",
+                    "Computer Literacy",
+                    "Research"
+                ],
+                "professional_submit": "N/A"
+            }
+        ]
+    },
+    "skillschema": {
+        "skills": [
+            {
+                "technical": "Python, Javascript, HTML, CSS, Backend Development, RESTful APIs, Database Tuning, Caching Strategies, Code Refactoring",
+                "soft": "Team and Time Management, Communication, Leadership, Research, Problem Solving, Teamwork",
+                "languages": "English (Fluent)",
+                "certification": "N/A"
+            }
+        ]
+    },
+    "affiliationschema": {
+        "affiliation": [
+            {
+                "name": "N/A",
+                "position": "N/A",
+                "date": "N/A"
+            }
+        ]
+    },
+    "awardschema": {
+        "award": [
+            {
+                "name": "Exemplary leadership Award in Lagos state University, Epe campus",
+                "issuing_organization": "Lagos state University, Epe campus",
+                "date": "2024",
+                "description": "N/A"
+            },
+            {
+                "name": "Dangote Scholarship",
+                "issuing_organization": "Dangote Group",
+                "date": "2024",
+                "description": "N/A"
+            },
+            {
+                "name": "Presidential Award - NUESA",
+                "issuing_organization": "NUESA",
+                "date": "2024",
+                "description": "N/A"
+            },
+            {
+                "name": "Lagos State Scholarship Scholar (LSSB)",
+                "issuing_organization": "Lagos State Scholarship Board",
+                "date": "2023",
+                "description": "N/A"
+            },
+            {
+                "name": "Federal Scholarship Scholar (FSB)",
+                "issuing_organization": "Federal Scholarship Board",
+                "date": "2023",
+                "description": "N/A"
+            },
+            {
+                "name": "Lagos State University Scholar",
+                "issuing_organization": "Lagos State University",
+                "date": "2023",
+                "description": "N/A"
+            }
+        ]
+    },
+    "projectschema": {
+        "project": [
+            {
+                "name": "Design and Construction of an AI Invigilating System",
+                "description": "N/A",
+                "technology_used": "AI, Github",
+                "role": "N/A",
+                "results": "N/A"
+            }
+        ]
+    }
+}
