@@ -8,8 +8,23 @@ from dataclasses import dataclass, asdict
 #     id: str = datetime.now().strftime("%H:%M:%S")
 #     task_type: str  # Removed Literal; it's now sufficient to just define this field
 
+
 #     def __call__(self, *args, **kwds) -> Dict:
 #         return asdict(self)
+@dataclass
+class UserModel:
+    email: str
+    file_path: str
+    id: str = datetime.now().strftime("%H:%M:%S")
+    task_type: str = "user"
+
+    @property
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "task_type": self.task_type,
+            "task": {"email": self.email, "file_path": self.file_path},
+        }
 
 
 @dataclass

@@ -1,6 +1,7 @@
 import json
 from typing import List
 from dotenv import load_dotenv
+import nest_asyncio
 
 load_dotenv()
 
@@ -53,22 +54,33 @@ parser = LlamaParse(result_type="markdown")  # "markdown" and "text" are availab
 file_extractor = {".pdf": parser}
 
 
-def parse_cv(file_path: str | List[str]):
-    logger.info(f"Started parsing CV from file(s): {file_path}")  # Log when parsing starts
+async def parse_cv(file_path: str | List[str]):
+    logger.info(f"Started parsing CV from file(s): {file_path}")
 
     try:
-        # Load documents from the given file path(s)
-        documents = SimpleDirectoryReader(input_files=[file_path], file_extractor=file_extractor).load_data()
-        logger.info(f"Loaded {len(documents)} documents from {file_path}")  # Log how many documents were loaded
+        # Initialize the reader with async support
+        reader = SimpleDirectoryReader(
+            input_files=[file_path], 
+            file_extractor=file_extractor
+        )
+        
+        # Use async load_data
+        documents = await reader.aload_data()
+        logger.info(f"Loaded {len(documents)} documents from {file_path}")
 
         content = ""
+        metadata = {}  # Initialize metadata dictionary
+        
         for idx, document in enumerate(documents):
-            if idx == 3:  # Break after processing 3 documents
-                logger.info("Processed 3 documents, stopping further parsing.")  # Log when we stop
+            if idx == 3:
+                logger.info("Processed 3 documents, stopping further parsing.")
                 break
             content = content + document.text
             metadata = document.metadata
-            logger.debug(f"Processed document {idx + 1}: {metadata['file_name']}")  # Debug log for each document
+            logger.debug(f"Processed document {idx + 1}: {metadata['file_name']}")
+
+        if not metadata:  # Check if metadata was populated
+            raise ValueError("No metadata available - no documents were processed")
 
         # Prepare the result dictionary
         result = dict(
@@ -78,12 +90,12 @@ def parse_cv(file_path: str | List[str]):
             text=content,
         )
 
-        logger.info(f"Successfully parsed CV from {file_path}. Returning result.")  # Log when parsing is done
+        logger.info(f"Successfully parsed CV from {file_path}. Returning result.")
         return result
 
     except Exception as e:
-        logger.error(f"Error while parsing CV from {file_path}: {e}")  # Log any errors that occur during the process
-        raise  # Reraise the exception after logging it
+        logger.error(f"Error while parsing CV from {file_path}: {e}")
+        raise
 
 
 personal_info_prompt = PromptTemplate(
@@ -162,7 +174,7 @@ interest_chain = interest_professional_prompt | llm | interest_parser
 skills_chain = skill_prompt | llm | skill_parser
 
 
-def parse_resume(resume_text):
+async def parse_resume(resume_text):
     personal_info = personal_chain.invoke({"resume_text": resume_text})
     edu_info = education_chain.invoke({"resume_text": resume_text})
     work_info = work_chain.invoke({"resume_text": resume_text})

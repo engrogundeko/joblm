@@ -1,17 +1,22 @@
+from datetime import datetime
 import os
 import asyncio
 from contextlib import asynccontextmanager
+import shutil
+import tempfile
 from dotenv import load_dotenv
 
 
 from log import logger  # Import the configured logger
 from queue_util.manager_queue import queue_manager
 from agent.scraper import ScraperAgent
+from schemas.model import UserModel
 
 
 import httpx
 from uvicorn import run
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
 from appwrite.query import Query
 from app_write import AppwriteClient
 
@@ -24,12 +29,55 @@ scraper_agent = ScraperAgent()
 APP_ENDPOINT = os.getenv("JOBLM_ENDPOINT")
 port = int(os.environ.get("PORT", 8000))
 
+
 @app.get("/ping")
 def home():
     logger.info("Home endpoint accessed.")
     return "refreshed successfully"
 
+@app.get("/success", response_class=HTMLResponse)
+async def serve_success_page():
+    with open("success.html", "r") as f:
+        content = f.read()
+    return HTMLResponse(content=content)
 
+@app.get("/error", response_class=HTMLResponse)
+async def serve_error_page():
+    with open("error.html", "r") as f:
+        content = f.read()
+    return HTMLResponse(content=content)
+
+@app.get("/signup", response_class=HTMLResponse)
+async def serve_signup_page():
+    with open("signup.html", "r") as f:
+        content = f.read()
+    return HTMLResponse(content=content)
+
+
+@app.post("/signup")
+async def signup(email: str = Form(...), pdf: UploadFile = File(...)):
+    try:
+        print(pdf)
+         # Create a unique filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{email}_{timestamp}.pdf"
+        
+        # Create file path in system's temp directory
+        file_path = os.path.join(tempfile.gettempdir(), filename)
+        
+        # Read and save the file
+        content = await pdf.read()
+        with open(file_path, "wb") as buffer:
+            buffer.write(content)
+        
+        print(f"File saved to: {file_path}")
+            
+        user = UserModel(email=email, file_path=file_path)
+        await queue_manager.enqueue(user.to_dict)
+        return RedirectResponse(url="/success", status_code=303)
+    except Exception as e:
+        logger.error(f"Error during signup: {str(e)}")
+        return RedirectResponse(url="/error", status_code=303)
 
 
 async def ping_server():
@@ -81,7 +129,6 @@ def get_user_resume(userId: str):
         )
     except Exception as e:
         logger.error(f"Error fetching resumes: {e}")
-        
 
     if result and result.get("documents"):
         return result["documents"][0].get("text", "")
