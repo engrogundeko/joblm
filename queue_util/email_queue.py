@@ -56,12 +56,17 @@ class EmailQueue(AsyncQueueAgent):
             # data = task.get('data', {})
             # job_list = data.get('job_list', {})
             # to_email = job_list.pop('email', None)
-
-            for email, data in dt.items():
-                logger.info(f"Sending job email to: {email}")
-                await asyncio.to_thread(send_job_email, email, data["job_list"])
-                logger.info(f"Job email sent successfully to: {email}")
-                await asyncio.sleep(600)
+            if not dt:
+                logger.warning("No data to process")
+                return
+            
+            # Get first (and only) item 
+            email = list(dt.keys())[0]
+            data = dt[email]
+            
+            logger.info(f"Sending job email to: {email}")
+            await asyncio.to_thread(send_job_email, email, data["job_list"])
+            logger.info(f"Job email sent successfully to: {email}")
 
         except Exception as e:
             logger.error(f"Error in handle_scrape: {str(e)}")

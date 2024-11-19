@@ -1,22 +1,18 @@
-import asyncio
 import os
-import shutil
-import tempfile
-from datetime import datetime
+import asyncio
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 
 from log import logger  # Import the configured logger
 from queue_util.manager_queue import queue_manager
-
 from agent.scraper import ScraperAgent
-from scrape.service import scrape_service
-from appwrite.query import Query
+
 
 import httpx
 from uvicorn import run
 from fastapi import FastAPI
+from appwrite.query import Query
 from app_write import AppwriteClient
 
 appwrite_client = AppwriteClient()
@@ -37,7 +33,7 @@ def home():
 
 
 async def ping_server():
-    endpoint = APP_ENDPOINT + "/ping"
+    endpoint = "https://joblm.onrender.com/ping"
     async with httpx.AsyncClient() as client:
         try:
             res = await client.get(endpoint)
@@ -50,7 +46,7 @@ async def ping_server():
 async def periodic_ping():
     while True:
         await ping_server()
-        await asyncio.sleep(600)
+        await asyncio.sleep(180)
 
 
 async def start_queues():
@@ -108,12 +104,9 @@ async def start_tasks():
         if users:
             for user in users:
                 userId = user["$id"]
-                print("================================")
                 resume_txt = get_user_resume(userId)
-                print("================================")
                 if resume_txt:
                     await scraper_agent.process_job_info(resume_txt, user["email"])
-                    print("================================")
 
                 else:
                     logger.error(f"No resume found for user {userId}")

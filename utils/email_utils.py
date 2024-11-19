@@ -53,7 +53,7 @@ def send_job_email(
         content = create_job_html_template(selected_jobs, to_email)
         
         # Send email
-        send_email(to_email, content, subject)
+        # send_email(to_email, content, subject)
 
         logger.info(f"Sent {num_jobs} jobs to {to_email}")
 
