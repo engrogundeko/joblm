@@ -46,10 +46,14 @@ def send_job_email(
         else:
             selected_jobs = jobs_list
 
-        # Create and send email
-        content = create_job_html_template(selected_jobs, to_email)
-        send_email(to_email, content, subject)
+        # Get subject first
         subject = get_email_subject(num_jobs)
+        
+        # Create content
+        content = create_job_html_template(selected_jobs, to_email)
+        
+        # Send email
+        send_email(to_email, content, subject)
 
         logger.info(f"Sent {num_jobs} jobs to {to_email}")
 
