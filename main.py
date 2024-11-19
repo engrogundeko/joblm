@@ -16,7 +16,7 @@ from appwrite.query import Query
 
 import httpx
 from uvicorn import run
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI
 from app_write import AppwriteClient
 
 appwrite_client = AppwriteClient()

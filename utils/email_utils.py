@@ -31,7 +31,6 @@ def send_job_email(
         to_email: Recipient email address
         jobs_list: List of job dictionaries
     """
-    subject = get_email_subject(num_jobs)
     try:
         # Handle empty list
         if not jobs_list:
@@ -50,6 +49,7 @@ def send_job_email(
         # Create and send email
         content = create_job_html_template(selected_jobs, to_email)
         send_email(to_email, content, subject)
+        subject = get_email_subject(num_jobs)
 
         logger.info(f"Sent {num_jobs} jobs to {to_email}")
 
