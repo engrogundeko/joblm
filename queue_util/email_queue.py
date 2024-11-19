@@ -61,7 +61,7 @@ class EmailQueue(AsyncQueueAgent):
                 logger.info(f"Sending job email to: {email}")
                 await asyncio.to_thread(send_job_email, email, data["job_list"])
                 logger.info(f"Job email sent successfully to: {email}")
-                asyncio.sleep(600)
+                await asyncio.sleep(600)
 
         except Exception as e:
             logger.error(f"Error in handle_scrape: {str(e)}")

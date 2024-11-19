@@ -11,9 +11,9 @@ from .agent import job_chain, to_dict
 from vector_database import vector_db
 from queue_util.manager_queue import queue_manager
 from schemas.model import ScrapeModel, DBModel, Job, EmailModel
+
 # from scrape.service import ScraperService
 from asyncio_throttle import Throttler
-
 
 
 class ScraperAgent:
@@ -33,34 +33,70 @@ class ScraperAgent:
 
     async def process_job_info(self, resume_text: str, email: str):
         try:
+            # Initialize jobs list
+            jobs = []
+            
+            # Get job data
             job = await job_chain.ainvoke({"resume_text": resume_text})
             job_task = await self.to_dict(job)
             task = ScrapeModel(data=job_task["jobschema"])
             task_id = task.id
             task_job = task.to_dict
+            
+            # Enqueue task
             await queue_manager.enqueue(task_job)
+            
+            # Get results
             results = await queue_manager.result_queue.get_result_by_id(task_id)
-            re_task = results["task"]
-            re = re_task["data"]
+            if results and "task" in results:
+                re_task = results["task"]
+                jobs = re_task.get("data", [])
 
-            # Batch process jobs
-            job_batch = []
-            for r in re:
-                r.pop("id")
-                job_data = Job(**r)
-                job_batch.append((job_data, email))
+            # Process jobs in batches
+            if jobs:
+                job_batch = []
+                for job_data in jobs:
+                    if isinstance(job_data, dict):
+                        job_data.pop("id", None)  # Remove id if exists
+                        job = Job(**job_data)
+                        job_batch.append((job, email))
 
-                # Process batch when it reaches certain size
-                if len(job_batch) == len(re):  # Adjust batch size as needed
+                    # Process batch when it reaches size
+                    if len(job_batch) >= self.scrape_batch:
+                        await self._extract_job_batch(job_batch)
+                        job_batch = []  # Clear batch
+
+                # Process remaining jobs
+                if job_batch:
                     await self._extract_job_batch(job_batch)
-                    job_batch = []
 
-            # Process remaining jobs in batch
-            if job_batch:
-                await self._extract_job_batch(job_batch)
+            return len(jobs)  # Return number of jobs processed
 
         except Exception as e:
-            logger.error(f"Error in process_job_info: {e}")
+            logger.error(f"Error in process_job_info: {str(e)}")
+            raise
+
+    def _format_db_data(self, job_data):
+        return {
+            "job_title": str(job_data.get("job_title", ""))[:255],
+            "job_description": str(job_data.get("job_description", ""))[:65535],
+            "required_skills": "|".join(
+                str(skill) for skill in job_data.get("required_skills", [])
+            )[:65535],
+            "responsibilities": "|".join(
+                str(resp) for resp in job_data.get("responsibilities", [])
+            )[:65535],
+            "qualifications": "|".join(
+                str(qual) for qual in job_data.get("qualifications", [])
+            )[:65535],
+            "location": str(job_data.get("location", ""))[:255],
+            "salary_range": str(job_data.get("salary_range", ""))[:255],
+            "company_info": str(job_data.get("company_info", ""))[:65535],
+            "keywords": "|".join(
+                str(keyword) for keyword in job_data.get("keywords", [])
+            )[:65535],
+            "email": str(job_data.get("email", ""))[:255],
+        }
 
     async def _extract_job_batch(self, job_batch: list[tuple[Job, str]]):
         """Process a batch of jobs at once"""
@@ -89,7 +125,9 @@ class ScraperAgent:
                 job_data_url = job_data_dict.copy()
                 job_data_url["job_url"] = job_url
                 db_data = DBModel(
-                    collection_name=Config.job_collection, operation_type="insert", data=job_data_dict
+                    collection_name=Config.job_collection,
+                    operation_type="insert",
+                    data=self._format_db_data(job_data_dict),
                 )
                 email_batch.append((job_data_url))
                 db_batch.append(db_data.to_dict)
@@ -102,14 +140,13 @@ class ScraperAgent:
             if db_batch:
                 for db in db_batch:
                     await queue_manager.enqueue(db)
-                
+
             if email_batch:
                 email_data = EmailModel(data=email_batch, operation_type="scrape")
                 await queue_manager.enqueue(email_data.to_dict)
-                
+
             if vector_batch:
                 await vector_db.upsert(data=vector_batch, namespace="job")
-
 
             logger.info(f"Processed batch of {len(job_batch)} jobs")
 

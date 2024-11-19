@@ -52,6 +52,7 @@ class ScraperQueue(AsyncQueueAgent):
             "google_search_term": task["google_search_term"],
         }
         # Scrape jobs in a non-blocking way
+        jobs = None
         try:
             jobs = await asyncio.to_thread(scrape_jobs, **task_parameters)
             logger.info(
@@ -62,6 +63,7 @@ class ScraperQueue(AsyncQueueAgent):
             # return  # Exit early if scraping fails
 
         # Create the ScrapeModel instance
-        jobs = jobs.to_dict(orient="records")
-        result_data = ResultModel(data=jobs, id=task_id)
-        await self.result_queue.store_result(result_data.to_dict)
+        if jobs is not None:
+            jobs = jobs.to_dict(orient="records")
+            result_data = ResultModel(data=jobs, id=task_id)
+            await self.result_queue.store_result(result_data.to_dict)

@@ -1,14 +1,15 @@
 import asyncio
+import os
 import shutil
 import tempfile
 from datetime import datetime
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 
-from repository import repository
-from agent.agent import job_chain, to_dict
+
 from log import logger  # Import the configured logger
 from queue_util.manager_queue import queue_manager
-from schemas.model import ScrapeModel
+
 from agent.scraper import ScraperAgent
 from scrape.service import scrape_service
 from appwrite.query import Query
@@ -22,45 +23,20 @@ appwrite_client = AppwriteClient()
 
 
 app = FastAPI()
+load_dotenv()
 scraper_agent = ScraperAgent()
+APP_ENDPOINT = os.getenv("JOBLM_ENDPOINT")
 
-
-@app.get("/")
+@app.get("/ping")
 def home():
     logger.info("Home endpoint accessed.")
     return "refreshed successfully"
 
 
-@app.post("/user")
-async def create_new_user(username: str, email: str, pdf: UploadFile = File(...)):
-    # Generate a unique ID for the job
-    job_id = datetime.now().strftime("%H:%M:%S")
-    logger.info(f"Received request to create new user: {username} with email: {email}")
-
-    # Create a temporary file to save the uploaded file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-        shutil.copyfileobj(pdf.file, temp_file)
-        temp_file_path = temp_file.name  # Get the path of the temporary file
-    logger.info(f"Temporary file created at {temp_file_path} for user: {username}")
-
-    # Enqueue the job with the temporary file path
-    task = {
-        "id": job_id,
-        "task_type": "user",
-        "task": {"user_name": username, "path": temp_file_path, "email": email},
-    }
-    await queue_manager.enqueue(task)
-    logger.info(f"Job {job_id} enqueued for user creation.")
-
-    return {
-        "status": "Job enqueued",
-        "job_id": job_id,
-        "temp_file_path": temp_file_path,
-    }
 
 
 async def ping_server():
-    endpoint = "http://127.0.0.1:8000"
+    endpoint = APP_ENDPOINT + "/ping"
     async with httpx.AsyncClient() as client:
         try:
             res = await client.get(endpoint)
@@ -81,7 +57,7 @@ async def start_queues():
     asyncio.create_task(queue_manager.run_all())
 
 
-def get_all_users():
+async def get_all_users():
     """
     Get all users from Appwrite
 
@@ -100,10 +76,16 @@ def get_all_users():
 
 
 def get_user_resume(userId: str):
+    try:
+        result = appwrite_client.database.list_documents(
+            collection_id="cv_metadata",
+            database_id=appwrite_client.database_id,
+            queries=[Query.equal("user_id", userId)],
+        )
+    except Exception as e:
+        logger.error(f"Error fetching resumes: {e}")
+        
 
-    result = appwrite_client.database.list_documents(
-        collection_id="cv_metadata", queries=[Query.equal("user_id", userId)], limit=1
-    )
     if result and result.get("documents"):
         return result["documents"][0].get("text", "")
 
@@ -115,7 +97,7 @@ async def start_tasks():
 
         # Fetch resumes
         try:
-            users = await asyncio.to_thread(get_all_users)
+            users = await get_all_users()
             logger.info(f"Fetched {len(users)} resumes from user collection.")
         except Exception as e:
             logger.error(f"Error fetching resumes: {e}")
@@ -125,10 +107,12 @@ async def start_tasks():
         if users:
             for user in users:
                 userId = user["$id"]
-                resume_txt = asyncio.to_thread(get_user_resume, userId)
-                print(resume_txt)
+                print("================================")
+                resume_txt = get_user_resume(userId)
+                print("================================")
                 if resume_txt:
                     await scraper_agent.process_job_info(resume_txt, user["email"])
+                    print("================================")
 
                 else:
                     logger.error(f"No resume found for user {userId}")
@@ -169,4 +153,4 @@ app.router.lifespan_context = lifespan
 
 if __name__ == "__main__":
     logger.info("Starting FastAPI server.")
-    run(app)
+    run(app, host="0.0.0.0", port=8000)
