@@ -26,6 +26,7 @@ app = FastAPI()
 load_dotenv()
 scraper_agent = ScraperAgent()
 APP_ENDPOINT = os.getenv("JOBLM_ENDPOINT")
+port = int(os.environ.get("PORT", 8000))
 
 @app.get("/ping")
 def home():
@@ -153,4 +154,4 @@ app.router.lifespan_context = lifespan
 
 if __name__ == "__main__":
     logger.info("Starting FastAPI server.")
-    run(app, host="0.0.0.0", port=8000)
+    run(app, host="0.0.0.0", port=port)
