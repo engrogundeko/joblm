@@ -43,7 +43,7 @@ class AppwriteClient:
         self.storage = Storage(self.client)
         self.users = Users(self.client)
         self.database_id = database_id
-        self.initialize_collection(["jobs", "users"])
+        self.initialize_collection(["jobs", "users", "cv_metadata"])
 
     def initialize_collection(self, collection_ids: List[str]):
         """
@@ -58,8 +58,8 @@ class AppwriteClient:
                     try:
                         if collection_id == "jobs":
                             self.create_jobs_schema()
-                        elif collection_id == "user":
-                            self.create_user_schema()
+                        elif collection_id == "cv_metadata":
+                            self.create_cv_metadata_schema()
                         else:
                             self.database.create_collection(
                                 database_id=self.database_id,
@@ -89,13 +89,13 @@ class AppwriteClient:
             attributes = [
                 {"key": "job_title", "size": 255, "required": True},
                 {"key": "job_description", "size": 65535, "required": True},
-                {"key": "required_skills", "size": 255, "required": False, "array": True},
-                {"key": "responsibilities", "size": 255, "required": False, "array": True},
-                {"key": "qualifications", "size": 255, "required": False, "array": True},
+                {"key": "required_skills", "size": 65535, "required": False},  # Changed to text
+                {"key": "responsibilities", "size": 65535, "required": False},  # Changed to text
+                {"key": "qualifications", "size": 65535, "required": False},  # Changed to text
                 {"key": "location", "size": 255, "required": False},
                 {"key": "salary_range", "size": 255, "required": False},
                 {"key": "company_info", "size": 65535, "required": False},
-                {"key": "keywords", "size": 255, "required": False, "array": True},
+                {"key": "keywords", "size": 65535, "required": False},  # Changed to text
                 {"key": "email", "size": 255, "required": False}
             ]
             
@@ -125,53 +125,92 @@ class AppwriteClient:
             
         except Exception as e:
             print(f"Error creating jobs schema: {e}")
-    def create_user_schema(self):
+            
+
         """
-        Create user collection with proper schema for job listings
+        Create user collection with proper schema for user profiles
         """
         try:
-            # Create jobs collection
+            # Create user collection
             collection = self.database.create_collection(
                 database_id=self.database_id,
-                collection_id="user",
-                name="user"
+                collection_id="users",
+                name="users"
             )
             
-            # Define job attributes
+            # Define user attributes
             attributes = [
+                {"key": "username", "size": 255, "required": True},
                 {"key": "email", "size": 255, "required": True},
-                {"key": "password", "size": 65535, "required": True},
-                {"key": "username", "size": 255, "required": False, "array": True},
-                {"key": "fullname", "size": 255, "required": False, "array": True},
-
+                {"key": "file_name", "size": 255, "required": True},
+                {"key": "file_type", "size": 255, "required": True},
+                {"key": "file_size", "type": "integer", "required": True},
+                {"key": "text", "size": 65535, "required": True}
             ]
             
             # Create each attribute
             for attr in attributes:
-                if attr.get("array", False):
-                    self.database.create_string_attribute(
+                if attr.get("type") == "object":
+                    # Create object attribute
+                    self.database.create_object_attribute(
                         database_id=self.database_id,
-                        collection_id="user",
+                        collection_id="users",
                         key=attr["key"],
-                        size=attr["size"],
                         required=attr["required"],
-                        array=True
+                        attributes=attr["attributes"]
+                    )
+                elif attr.get("type") == "integer":
+                    # Create integer attribute
+                    self.database.create_integer_attribute(
+                        database_id=self.database_id,
+                        collection_id="users",
+                        key=attr["key"],
+                        required=attr["required"]
                     )
                 else:
+                    # Create string attribute
                     self.database.create_string_attribute(
                         database_id=self.database_id,
-                        collection_id="user",
+                        collection_id="users",
                         key=attr["key"],
                         size=attr["size"],
                         required=attr["required"]
                     )
                 
-                print(f"Created attribute: {attr['key']}")
-                
-            print("Successfully created jobs collection with schema")
+                # logger.info(f"Created attribute: {attr['key']}")
+            
+            # Create indexes
+            indexes = [
+                {
+                    "key": "email_idx",
+                    "type": "key",
+                    "attributes": ["email"],
+                    "orders": ["ASC"]
+                },
+                {
+                    "key": "username_idx",
+                    "type": "key", 
+                    "attributes": ["username"],
+                    "orders": ["ASC"]
+                }
+            ]
+            
+            for index in indexes:
+                self.database.create_index(
+                    database_id=self.database_id,
+                    collection_id="users",
+                    key=index["key"],
+                    type=index["type"],
+                    attributes=index["attributes"],
+                    orders=index["orders"]
+                )
+            #     logger.info(f"Created index: {index['key']}")
+            
+            # logger.info("Successfully created users collection with schema")
             
         except Exception as e:
-            print(f"Error creating jobs schema: {e}")
+            # logger.error(f"Error creating users schema: {str(e)}")
+            raise
 
     def get_unique_id(self):
         return ID.unique()
@@ -602,6 +641,71 @@ class AppwriteClient:
                     raise
                 delay = base_delay * (2**attempt)
                 await asyncio.sleep(delay)
+
+    def create_cv_metadata_schema(self):
+        """
+        Create cv_metadata collection with schema for CV information and user reference
+        """
+        try:
+            # Create cv_metadata collection
+            self.database.create_collection(
+                database_id=self.database_id,
+                collection_id="cv_metadata",
+                name="CV Metadata"
+            )
+            
+            # Define CV metadata attributes
+            attributes = [
+                {"key": "file_name", "size": 255, "required": True},
+                {"key": "file_type", "size": 255, "required": True},
+                {"key": "file_size", "type": "integer", "required": True},
+                {"key": "text", "size": 65535, "required": True},
+                {"key": "user_id", "size": 255, "required": True},  # Reference to user
+            ]
+            
+            # Create each attribute
+            for attr in attributes:
+                if attr.get("type") == "integer":
+                    self.database.create_integer_attribute(
+                        database_id=self.database_id,
+                        collection_id="cv_metadata",
+                        key=attr["key"],
+                        required=attr["required"]
+                    )
+                else:
+                    self.database.create_string_attribute(
+                        database_id=self.database_id,
+                        collection_id="cv_metadata",
+                        key=attr["key"],
+                        size=attr["size"],
+                        required=attr["required"]
+                    )
+
+            # Create indexes for quick lookups
+            indexes = [
+                {
+                    "key": "user_id_idx",
+                    "type": "key",
+                    "attributes": ["user_id"],
+                    "orders": ["ASC"]
+                },
+            ]
+            
+            for index in indexes:
+                self.database.create_index(
+                    database_id=self.database_id,
+                    collection_id="cv_metadata",
+                    key=index["key"],
+                    type=index["type"],
+                    attributes=index["attributes"],
+                    orders=index["orders"]
+                )
+            
+            print("Successfully created cv_metadata collection with schema")
+            
+        except Exception as e:
+            print(f"Error creating cv_metadata schema: {str(e)}")
+            raise
 
 
 # app_write_client = AppwriteClient()

@@ -91,7 +91,7 @@ class ScraperAgent:
                 db_data = DBModel(
                     collection_name=Config.job_collection, operation_type="insert", data=job_data_dict
                 )
-                email_batch.append(job_data_url)
+                email_batch.append((job_data_url))
                 db_batch.append(db_data.to_dict)
 
                 # Prepare vector entry
@@ -105,7 +105,7 @@ class ScraperAgent:
                 
             if email_batch:
                 email_data = EmailModel(data=email_batch, operation_type="scrape")
-                await queue_manager.enqueue(email_data)
+                await queue_manager.enqueue(email_data.to_dict)
                 
             if vector_batch:
                 await vector_db.upsert(data=vector_batch, namespace="job")

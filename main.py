@@ -11,10 +11,14 @@ from queue_util.manager_queue import queue_manager
 from schemas.model import ScrapeModel
 from agent.scraper import ScraperAgent
 from scrape.service import scrape_service
+from appwrite.query import Query
 
 import httpx
 from uvicorn import run
 from fastapi import FastAPI, UploadFile, File
+from app_write import AppwriteClient
+
+appwrite_client = AppwriteClient()
 
 
 app = FastAPI()
@@ -77,6 +81,33 @@ async def start_queues():
     asyncio.create_task(queue_manager.run_all())
 
 
+def get_all_users():
+    """
+    Get all users from Appwrite
+
+    Args:
+        limit: Maximum number of users to return (default: 100)
+    """
+    try:
+        # List users with pagination
+        users = appwrite_client.users.list()
+
+        return users["users"]  # Returns list of user objects
+
+    except Exception as e:
+        print(f"Error getting users: {str(e)}")
+        raise
+
+
+def get_user_resume(userId: str):
+
+    result = appwrite_client.database.list_documents(
+        collection_id="cv_metadata", queries=[Query.equal("user_id", userId)], limit=1
+    )
+    if result and result.get("documents"):
+        return result["documents"][0].get("text", "")
+
+
 async def start_tasks():
     while True:
         await asyncio.sleep(5)
@@ -84,8 +115,7 @@ async def start_tasks():
 
         # Fetch resumes
         try:
-            resumes_data = await repository.find_query("user", {})
-            users = [data for data in resumes_data]
+            users = await asyncio.to_thread(get_all_users)
             logger.info(f"Fetched {len(users)} resumes from user collection.")
         except Exception as e:
             logger.error(f"Error fetching resumes: {e}")
@@ -94,28 +124,14 @@ async def start_tasks():
         # Process each resume
         if users:
             for user in users:
-                resume_txt = user["cv"]["text"]
-                username = user["username"]
-                await scraper_agent.process_job_info(resume_txt, user["email"])
-                # logger.info(f"Processing resume for user: {username}")
-                # print(f"Resume text: {resume_txt}")
+                userId = user["$id"]
+                resume_txt = asyncio.to_thread(get_user_resume, userId)
+                print(resume_txt)
+                if resume_txt:
+                    await scraper_agent.process_job_info(resume_txt, user["email"])
 
-                # # Try invoking job chain for each resume
-                # try:
-                #     job = await job_chain.ainvoke({"resume_text": resume_txt})
-                #     job_task = to_dict(job)
-                #     logger.info(f"Job result: {job_task}")
-                # except Exception as e:
-                #     logger.error(f"Error invoking job chain for {username}: {e}")
-                #     continue  # Skip to the next resume if invocation fails
-
-                # # Enqueue job for further processing
-                # try:
-                #     task = ScrapeModel(data=job_task["jobschema"])
-                #     logger.info(f"Job {task.id} enqueued for resume scraping.")
-                #     await queue_manager.enqueue(task.to_dict)
-                # except Exception as e:
-                #     logger.error(f"Error enqueuing job for {username}: {e}")
+                else:
+                    logger.error(f"No resume found for user {userId}")
 
         logger.info("Completed one iteration of resume processing.")
         # Sleep for 24 hours before next batch

@@ -21,7 +21,7 @@ class DBQueue(AsyncQueueAgent):
             tasks = []
             while not self.queue.empty():
                 db_task = await self.queue.get()
-                logger.info(f"Database task received: {db_task["id"]}")
+                logger.info(f"Database task received: {db_task['id']}")
                 tasks.append(db_task)
 
                 # Process batch if we've accumulated 1000 tasks

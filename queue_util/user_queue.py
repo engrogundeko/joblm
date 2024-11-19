@@ -64,14 +64,14 @@ class UserQueue(AsyncQueueAgent):
                 f"Database task enqueued for user {user}"
             )  # Log database task enqueue
 
-            email_data = EmailModel(
-                operation_type="user", data={"username": user, "cv": cv_md}
-            )
+            # email_data = EmailModel(
+            #     operation_type="user", data={"username": user, "cv": cv_md}
+            # )
 
-            await self.email_queue.enqueue_task(email_data.to_dict)
-            logger.info(
-                f"Email task enqueued for user {user}"
-            )  # Log email task enqueue
+            # await self.email_queue.enqueue_task(email_data.to_dict)
+            # logger.info(
+            #     f"Email task enqueued for user {user}"
+            # )  # Log email task enqueue
 
             return {"status": "success", "user": user, "cv": cv_md}
         except Exception as e:
