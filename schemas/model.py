@@ -120,36 +120,7 @@ class Job:
     @property
     def to_dict(self):
         return asdict(self)
-        # return {
-        #     "site": self.site,
-        #     "job_url": self.job_url,
-        #     "title": self.title,
-        #     "company": self.company,
-        #     "location": self.location,
-        #     "date_posted": self.date_posted,
-        #     "job_type": self.job_type,
-        #     "salary_source": self.salary_source,
-        #     "interval": self.interval,
-        #     "min_amount": self.min_amount,
-        #     "max_amount": self.max_amount,
-        #     "is_remote": self.is_remote,
-        #     "listing_type": self.listing_type,
-        #     "job_level": self.job_level,
-        #     "job_function": self.job_function,
-        #     "job_url_direct": self.job_url_direct,
-        #     "emails": self.emails,
-        #     "description": self.description,
-        #     "currency": self.currency,
-        #     "company_logo": self.company_logo,
-        #     "company_addresses": self.company_addresses,
-        #     "company_num_employees": self.company_num_employees,
-        #     "company_revenue": self.company_revenue,
-        #     "company_description": self.company_description,
-        #     "company_industry": self.company_industry,
-        #     "company_url": self.company_url,
-        #     "company_url_direct": self.company_url_direct,
-
-        # }
+       
 
 
 @dataclass

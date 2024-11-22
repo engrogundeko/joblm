@@ -48,6 +48,7 @@ class ScraperAgent:
             
             # Get results
             results = await queue_manager.result_queue.get_result_by_id(task_id)
+            # print(results)
             if results and "task" in results:
                 re_task = results["task"]
                 jobs = re_task.get("data", [])
@@ -60,43 +61,17 @@ class ScraperAgent:
                         job_data.pop("id", None)  # Remove id if exists
                         job = Job(**job_data)
                         job_batch.append((job, email))
-
-                    # Process batch when it reaches size
-                    if len(job_batch) >= self.scrape_batch:
-                        await self._extract_job_batch(job_batch)
-                        job_batch = []  # Clear batch
-
                 # Process remaining jobs
                 if job_batch:
+                    # print(job_batch)
                     await self._extract_job_batch(job_batch)
 
-            return len(jobs)  # Return number of jobs processed
+            # return   # Return number of jobs processed
 
         except Exception as e:
             logger.error(f"Error in process_job_info: {str(e)}")
             raise
 
-    def _format_db_data(self, job_data):
-        return {
-            "job_title": str(job_data.get("job_title", ""))[:255],
-            "job_description": str(job_data.get("job_description", ""))[:65535],
-            "required_skills": "|".join(
-                str(skill) for skill in job_data.get("required_skills", [])
-            )[:65535],
-            "responsibilities": "|".join(
-                str(resp) for resp in job_data.get("responsibilities", [])
-            )[:65535],
-            "qualifications": "|".join(
-                str(qual) for qual in job_data.get("qualifications", [])
-            )[:65535],
-            "location": str(job_data.get("location", ""))[:255],
-            "salary_range": str(job_data.get("salary_range", ""))[:255],
-            "company_info": str(job_data.get("company_info", ""))[:65535],
-            "keywords": "|".join(
-                str(keyword) for keyword in job_data.get("keywords", [])
-            )[:65535],
-            "email": str(job_data.get("email", ""))[:255],
-        }
 
     async def _extract_job_batch(self, job_batch: list[tuple[Job, str]]):
         """Process a batch of jobs at once"""
@@ -137,18 +112,19 @@ class ScraperAgent:
                 vector_batch.append(vector_data)
             # Batch operations outside the throttled section
             # Process batches
-            if db_batch:
-                for db in db_batch:
-                    await queue_manager.enqueue(db)
+            # if db_batch:
+            #     for db in db_batch:
+            #         await queue_manager.enqueue(db)
 
             if email_batch:
                 email_data = EmailModel(data=email_batch, operation_type="scrape")
                 await queue_manager.enqueue(email_data.to_dict)
 
-            if vector_batch:
-                await vector_db.upsert(data=vector_batch, namespace="job")
+            # if vector_batch:
+            #     await vector_db.upsert(data=vector_batch, namespace="job")
 
             logger.info(f"Processed batch of {len(job_batch)} jobs")
+            
 
         except Exception as e:
             logger.error(f"Error in _extract_job_batch: {e}")
@@ -184,3 +160,25 @@ class ScraperAgent:
             # Wait for 20 hours if quota is exceeded, then retry
             await sleep(20 * 60 * 60)
             return await self.get_llm()
+
+    def _format_db_data(self, job_data):
+        return {
+            "job_title": str(job_data.get("job_title", ""))[:255],
+            "job_description": str(job_data.get("job_description", ""))[:65535],
+            "required_skills": "|".join(
+                str(skill) for skill in job_data.get("required_skills", [])
+            )[:65535],
+            "responsibilities": "|".join(
+                str(resp) for resp in job_data.get("responsibilities", [])
+            )[:65535],
+            "qualifications": "|".join(
+                str(qual) for qual in job_data.get("qualifications", [])
+            )[:65535],
+            "location": str(job_data.get("location", ""))[:255],
+            "salary_range": str(job_data.get("salary_range", ""))[:255],
+            "company_info": str(job_data.get("company_info", ""))[:65535],
+            "keywords": "|".join(
+                str(keyword) for keyword in job_data.get("keywords", [])
+            )[:65535],
+            "email": str(job_data.get("email", ""))[:255],
+        }

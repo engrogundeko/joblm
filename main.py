@@ -2,7 +2,6 @@ from datetime import datetime
 import os
 import asyncio
 from contextlib import asynccontextmanager
-import shutil
 import tempfile
 from dotenv import load_dotenv
 
@@ -11,13 +10,13 @@ from log import logger  # Import the configured logger
 from queue_util.manager_queue import queue_manager
 from agent.scraper import ScraperAgent
 from schemas.model import UserModel
+from services import get_all_users, get_user_resume
 
 
 import httpx
 from uvicorn import run
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from appwrite.query import Query
 from app_write import AppwriteClient
 
 appwrite_client = AppwriteClient()
@@ -34,7 +33,7 @@ port = int(os.environ.get("PORT", 8000))
 def home():
     logger.info("Home endpoint accessed.")
     return "refreshed successfully"
-
+ 
 @app.get("/success", response_class=HTMLResponse)
 async def serve_success_page():
     with open("success.html", "r") as f:
@@ -101,39 +100,6 @@ async def start_queues():
     logger.info("Starting all queue tasks.")
     asyncio.create_task(queue_manager.run_all())
 
-
-async def get_all_users():
-    """
-    Get all users from Appwrite
-
-    Args:
-        limit: Maximum number of users to return (default: 100)
-    """
-    try:
-        # List users with pagination
-        users = appwrite_client.users.list()
-
-        return users["users"]  # Returns list of user objects
-
-    except Exception as e:
-        print(f"Error getting users: {str(e)}")
-        raise
-
-
-def get_user_resume(userId: str):
-    try:
-        result = appwrite_client.database.list_documents(
-            collection_id="cv_metadata",
-            database_id=appwrite_client.database_id,
-            queries=[Query.equal("user_id", userId)],
-        )
-    except Exception as e:
-        logger.error(f"Error fetching resumes: {e}")
-
-    if result and result.get("documents"):
-        return result["documents"][0].get("text", "")
-
-
 async def start_tasks():
     while True:
         await asyncio.sleep(5)
@@ -153,7 +119,10 @@ async def start_tasks():
                 userId = user["$id"]
                 resume_txt = get_user_resume(userId)
                 if resume_txt:
-                    await scraper_agent.process_job_info(resume_txt, user["email"])
+                    try:
+                        await scraper_agent.process_job_info(resume_txt, user["email"])
+                    except Exception as e:
+                        continue
 
                 else:
                     logger.error(f"No resume found for user {userId}")

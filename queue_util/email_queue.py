@@ -65,6 +65,7 @@ class EmailQueue(AsyncQueueAgent):
             data = dt[email]
             
             logger.info(f"Sending job email to: {email}")
+            # print(data["job_list"])
             await asyncio.to_thread(send_job_email, email, data["job_list"])
             logger.info(f"Job email sent successfully to: {email}")
 
