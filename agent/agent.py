@@ -63,5 +63,5 @@ job_extract_prompt = PromptTemplate(
     template=job_extract_template,
 )
 
-user_chain = user_info_prompt | llm_llama | user_parser
-job_chain = job_info_prompt | llm_llama | job_parser
+user_chain = user_info_prompt | llm_mixtra | user_parser
+job_chain = job_info_prompt | llm_mixtra | job_parser
