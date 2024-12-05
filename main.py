@@ -117,13 +117,16 @@ async def start_tasks():
         if users:
             for user in users:
                 userId = user["$id"]
+                print("===========================")
                 resume_txt = get_user_resume(userId)
                 if resume_txt:
                     try:
                         await scraper_agent.process_job_info(resume_txt, user["email"])
                     except Exception as e:
+                        print(str(e))
                         continue
 
+                    print("===========================")
                 else:
                     logger.error(f"No resume found for user {userId}")
 
