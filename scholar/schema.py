@@ -1,7 +1,4 @@
-from nt import link
-from typing import List, Optional
-from fastapi import applications
-from pydantic import BaseModel, HttpUrl, Field
+from typing import List
 
 
 class Scholarship(BaseModel):
