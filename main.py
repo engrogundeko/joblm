@@ -101,46 +101,62 @@ async def periodic_ping():
 async def start_queues():
     logger.info("Starting all queue tasks.")
     asyncio.create_task(queue_manager.run_all())
+    
 
 async def start_tasks():
-    asyncio.create_task(start_checking_new_offer())
+    # Create background tasks that run independently
+    scholarship_task = asyncio.create_task(run_scholarship_checks())
+    job_task = asyncio.create_task(run_job_checks())
+    
+    # Keep track of tasks
+    background_tasks = [scholarship_task, job_task]
+    
+    try:
+        # Wait for all tasks to complete (they won't, they're infinite loops)
+        await asyncio.gather(*background_tasks)
+    except Exception as e:
+        logger.error(f"Error in background tasks: {e}")
+        # Cancel all tasks on error
+        for task in background_tasks:
+            if not task.done():
+                task.cancel()
+        
+async def run_scholarship_checks():
+    while True:
+        try:
+            await start_checking_new_offer()
+            # Run every 19 hours
+            await asyncio.sleep(24 * 60 * 60)
+        except Exception as e:
+            logger.error(f"Error in scholarship checks: {e}")
+            await asyncio.sleep(60)  # Wait a minute before retrying
 
-
-
-# async def start_tasks():
-#     while True:
-#         await asyncio.sleep(5)
-#         logger.info("Starting resume scraping and job invocation.")
-
-#         # Fetch resumes
-#         try:
-#             users = await get_all_users()
-#             logger.info(f"Fetched {len(users)} resumes from user collection.")
-#         except Exception as e:
-#             logger.error(f"Error fetching resumes: {e}")
-#             continue  # Skip to the next iteration if fetching resumes fails
-
-#         # Process each resume
-#         if users:
-#             for user in users:
-#                 userId = user["$id"]
-#                 print("===========================")
-#                 resume_txt = get_user_resume(userId)
-#                 if resume_txt:
-#                     try:
-#                         await scraper_agent.process_job_info(resume_txt, user["email"])
-#                     except Exception as e:
-#                         print(str(e))
-#                         continue
-
-#                     print("===========================")
-#                 else:
-#                     logger.error(f"No resume found for user {userId}")
-
-#         logger.info("Completed one iteration of resume processing.")
-#         await start()
-#         await asyncio.sleep(4 * 60 * 60)
-
+async def run_job_checks():
+    while True:
+        try:
+            logger.info("Starting resume scraping and job invocation.")
+            users = await get_all_users()
+            logger.info(f"Fetched {len(users)} resumes from user collection.")
+            
+            if users:
+                for user in users:
+                    userId = user["$id"]
+                    resume_txt = get_user_resume(userId)
+                    if resume_txt:
+                        try:
+                            await scraper_agent.process_job_info(resume_txt, user["email"])
+                        except Exception as e:
+                            logger.error(f"Error processing job info: {e}")
+                            continue
+                    else:
+                        logger.error(f"No resume found for user {userId}")
+            
+            logger.info("Completed one iteration of resume processing.")
+            # Run every 19 hours
+            await asyncio.sleep(24 * 60 * 60)
+        except Exception as e:
+            logger.error(f"Error in job checks: {e}")
+            await asyncio.sleep(60)  # Wait a minute before retrying
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
