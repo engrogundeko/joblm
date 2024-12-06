@@ -1,7 +1,4 @@
-from concurrent.futures import process
-from typing import Dict, override, List
-from bs4 import BeautifulSoup, Tag
-import asyncio
+from bs4 import BeautifulSoup
 from .scraper import ScholarshipScraper
 
 
@@ -12,7 +9,6 @@ class DiscoveryHubScraper(ScholarshipScraper):
         # Override base_url if needed, but it's already set in parent class
         # self.base_url = "https://dixcoverhub.com.ng/category/scholarship"
 
-    @override
     async def parse_scholarship(self, soup: BeautifulSoup):
         scholarships = []
         main_tag = soup.find("main")
