@@ -1,6 +1,5 @@
 from .prompt import new_user_template, job_template, job_extract_template
 from .schema import user_parser, job_parser, job_extract_parser
-import asyncio
 from .llm import GeminiLLM
 
 from dotenv import load_dotenv
@@ -8,7 +7,7 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 
 load_dotenv()
-gemini_llm = GeminiLLM()
+gemini_llm: GeminiLLM = GeminiLLM()
 llm_llama = ChatGroq(
     model="llama-3.2-90b-text-preview",
     # model="mixtral-8x7b-32768",

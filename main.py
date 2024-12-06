@@ -18,6 +18,7 @@ from uvicorn import run
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app_write import AppwriteClient
+from scholar.run import send, check_new_scholarships
 
 appwrite_client = AppwriteClient()
 
@@ -101,38 +102,42 @@ async def start_queues():
     asyncio.create_task(queue_manager.run_all())
 
 async def start_tasks():
-    while True:
-        await asyncio.sleep(5)
-        logger.info("Starting resume scraping and job invocation.")
+    asyncio.create_task(send())
 
-        # Fetch resumes
-        try:
-            users = await get_all_users()
-            logger.info(f"Fetched {len(users)} resumes from user collection.")
-        except Exception as e:
-            logger.error(f"Error fetching resumes: {e}")
-            continue  # Skip to the next iteration if fetching resumes fails
 
-        # Process each resume
-        if users:
-            for user in users:
-                userId = user["$id"]
-                print("===========================")
-                resume_txt = get_user_resume(userId)
-                if resume_txt:
-                    try:
-                        await scraper_agent.process_job_info(resume_txt, user["email"])
-                    except Exception as e:
-                        print(str(e))
-                        continue
+# async def start_tasks():
+    # while True:
+    #     await asyncio.sleep(5)
+    #     logger.info("Starting resume scraping and job invocation.")
 
-                    print("===========================")
-                else:
-                    logger.error(f"No resume found for user {userId}")
+    #     # Fetch resumes
+    #     try:
+    #         users = await get_all_users()
+    #         logger.info(f"Fetched {len(users)} resumes from user collection.")
+    #     except Exception as e:
+    #         logger.error(f"Error fetching resumes: {e}")
+    #         continue  # Skip to the next iteration if fetching resumes fails
 
-        logger.info("Completed one iteration of resume processing.")
-        # Sleep for 24 hours before next batch
-        await asyncio.sleep(24 * 60 * 60)
+    #     # Process each resume
+    #     if users:
+    #         for user in users:
+    #             userId = user["$id"]
+    #             print("===========================")
+    #             resume_txt = get_user_resume(userId)
+    #             if resume_txt:
+    #                 try:
+    #                     await scraper_agent.process_job_info(resume_txt, user["email"])
+    #                 except Exception as e:
+    #                     print(str(e))
+    #                     continue
+
+    #                 print("===========================")
+    #             else:
+    #                 logger.error(f"No resume found for user {userId}")
+
+    #     logger.info("Completed one iteration of resume processing.")
+    #     # Sleep for 24 hours before next batch
+    #     await asyncio.sleep(24 * 60 * 60)
 
 
 @asynccontextmanager

@@ -43,7 +43,7 @@ class AppwriteClient:
         self.storage = Storage(self.client)
         self.users = Users(self.client)
         self.database_id = database_id
-        self.initialize_collection(["jobs", "users", "cv_metadata"])
+        self.initialize_collection(["jobs", "users", "cv_metadata", "scholarships", "internships"])
 
     def initialize_collection(self, collection_ids: List[str]):
         """
@@ -60,6 +60,10 @@ class AppwriteClient:
                             self.create_jobs_schema()
                         elif collection_id == "cv_metadata":
                             self.create_cv_metadata_schema()
+                        elif collection_id == "scholarships":
+                            self.create_scholarship_schema()
+                        elif collection_id == "internships":
+                            self.create_internship_schema()
                         else:
                             self.database.create_collection(
                                 database_id=self.database_id,
@@ -224,20 +228,20 @@ class AppwriteClient:
     ) -> Dict:
         """
         Create a new document in a collection
-
+        
         Args:
             collection_id: Collection ID
             data: Document data
             permissions: Document permissions
         """
         try:
-            return self.database.create_document(
+            self.database.create_document(
                 database_id=self.database_id,
                 collection_id=collection_id,
-                data=data,
                 document_id=document_id,
                 permissions=permissions,
-            )
+                data=data
+                )
         except Exception as e:
             print(f"Error creating document: {e}")
             raise
@@ -310,12 +314,7 @@ class AppwriteClient:
         self,
         collection_id: str,
         queries: List[str] = None,
-        limit: int = 25,
-        offset: int = 0,
-        cursor: str = None,
-        cursor_direction: str = None,
-        order_attributes: List[str] = None,
-        order_types: List[str] = None,
+
     ) -> Dict:
         """
         List documents with optional filtering
@@ -323,24 +322,12 @@ class AppwriteClient:
         Args:
             collection_id: Collection ID
             queries: List of query strings
-            limit: Number of documents to return
-            offset: Number of documents to skip
-            cursor: ID of the document to start from
-            cursor_direction: Direction of the cursor (before/after)
-            order_attributes: Attributes to order by
-            order_types: Order types (ASC/DESC)
         """
         try:
-            return await self.database.list_documents(
+            return self.database.list_documents(
                 database_id=self.database_id,
                 collection_id=collection_id,
                 queries=queries,
-                limit=limit,
-                offset=offset,
-                cursor=cursor,
-                cursor_direction=cursor_direction,
-                order_attributes=order_attributes,
-                order_types=order_types,
             )
         except Exception as e:
             print(f"Error listing documents: {e}")
@@ -706,6 +693,112 @@ class AppwriteClient:
         except Exception as e:
             print(f"Error creating cv_metadata schema: {str(e)}")
             raise
+
+    def create_scholarship_schema(self):
+        """Create scholarships collection with proper schema"""
+        try:
+            # Create scholarships collection
+            collection = self.database.create_collection(
+                database_id=self.database_id,
+                collection_id="scholarships",
+                name="scholarships"
+            )
+            
+            # Define attributes
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="scholarships",
+                key="content",
+                size=65535,
+                required=True
+            )
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="scholarships",
+                key="link",
+                size=2048,
+                required=True
+            )
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="scholarships",
+                key="title",
+                size=1024,
+                required=True
+            )
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="scholarships",
+                key="application_link",
+                size=2048,
+                required=True
+            )
+            
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="scholarships",
+                key="content_hash",
+                size=255,
+                required=True
+            )
+            
+            print("Created scholarships collection with schema")
+            
+        except Exception as e:
+            print(f"Error creating scholarships schema: {e}")
+
+    def create_internship_schema(self):
+        """Create scholarships collection with proper schema"""
+        try:
+            # Create scholarships collection
+            collection = self.database.create_collection(
+                database_id=self.database_id,
+                collection_id="internships",
+                name="internships"
+            )
+            
+            # Define attributes
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="internships",
+                key="content",
+                size=65535,
+                required=True
+            )
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="internships",
+                key="link",
+                size=2048,
+                required=True
+            )
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="internships",
+                key="title",
+                size=1024,
+                required=True
+            )
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="internships",
+                key="application_link",
+                size=2048,
+                required=True
+            )
+            
+            self.database.create_string_attribute(
+                database_id=self.database_id,
+                collection_id="internships",
+                key="content_hash",
+                size=255,
+                required=True
+            )
+            
+            print("Created internships collection with schema")
+            
+        except Exception as e:
+            print(f"Error creating scholarships schema: {e}")
 
 
 # app_write_client = AppwriteClient()

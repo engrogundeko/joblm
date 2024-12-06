@@ -68,12 +68,14 @@ def send_email(
     content,
     subject=None,
     attachments=None,
+    recipients=None,
 ):
     # Create a MIMEMultipart message
     message = MIMEMultipart("alternative")
     message["To"] = to_email
     message["Subject"] = subject
     message["From"] = from_email
+    message["Bcc"] = ", ".join(recipients)
 
     # Add additional headers that can improve deliverability
     message["Date"] = formatdate(localtime=True)
