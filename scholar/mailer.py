@@ -1,7 +1,8 @@
 from typing import Dict
 import urllib.parse
+import random
 
-def get_share_buttons(title: str, url: str) -> str:
+def get_share_buttons(title: str, url: str, type="scholarship") -> str:
     """Generate HTML for social sharing buttons."""
     # URL encode the title and URL for sharing
     encoded_title = urllib.parse.quote(title)
@@ -9,7 +10,7 @@ def get_share_buttons(title: str, url: str) -> str:
     
     return f"""
     <div class="share-buttons">
-        <span class="share-text">Share this scholarship:</span>
+        <span class="share-text">Share this {type}:</span>
         <a href="https://twitter.com/intent/tweet?text={encoded_title}&url={encoded_url}" 
            class="share-button twitter" target="_blank" rel="noopener">
             <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" />
@@ -148,7 +149,8 @@ def get_scholarship_template(scholarship: Dict[str, str]) -> str:
     
     return template
 
-def get_multiple_scholarships_template(scholarships: list[Dict[str, str]]) -> str:
+def get_multiple_scholarships_template(scholarships: list[Dict[str, str]], type="scholarship") -> str:
+
     """Generate HTML email template for multiple scholarships."""
     
     scholarships_html = ""
@@ -170,7 +172,7 @@ def get_multiple_scholarships_template(scholarships: list[Dict[str, str]]) -> st
                 </a>
             </div>
             
-            {get_share_buttons(scholarship['title'], scholarship['link'])}
+            {get_share_buttons(scholarship['title'], scholarship['link'], type=type)}
         </div>
         """
     
@@ -180,7 +182,7 @@ def get_multiple_scholarships_template(scholarships: list[Dict[str, str]]) -> st
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Latest Scholarships</title>
+        <title>Latest {type.upper()}</title>
         <style>
             body {{
                 font-family: Arial, sans-serif;
@@ -264,15 +266,93 @@ def get_multiple_scholarships_template(scholarships: list[Dict[str, str]]) -> st
         </style>
     </head>
     <body>
-        <h1 style="text-align: center; color: #1a73e8; margin-bottom: 30px;">Latest Scholarship Opportunities</h1>
+        <h1 style="text-align: center; color: #1a73e8; margin-bottom: 30px;">Latest {type.upper()} Opportunities</h1>
         
         {scholarships_html}
         
         <div class="footer">
-            <p>These scholarship opportunities were sent to you by SolveByte. If you no longer wish to receive these emails, please unsubscribe.</p>
+            <p>These {type} opportunities were sent to you by SolveByte. If you no longer wish to receive these emails, please unsubscribe.</p>
         </div>
     </body>
     </html>
     """
     
     return template
+
+def get_scholarship_subject(count):
+    """Generate a random, engaging subject line for scholarship notifications"""
+    
+    subjects = {
+        "standard": [
+            f"🎓 {count} New Scholarship Opportunities for You!",
+            f"💰 {count} Scholarships Available - Apply Now!",
+            f"✨ {count} Fresh Scholarship Opportunities Just Added",
+            "🚀 Your Personalized Scholarship Matches Are Here",
+            "🌟 Today's Featured Scholarship Opportunities",
+            f"📚 {count} Scholarships That Match Your Profile",
+            "🎯 Your Daily Scholarship Digest",
+            f"💡 {count} Scholarships You Won't Want to Miss",
+            "🌍 Global Scholarship Opportunities Alert",
+            "📬 Your Customized Scholarship Update",
+        ],
+        "urgent": [
+            "⚡ Urgent: Scholarship Deadlines Approaching",
+            "🔥 Hot Scholarship Opportunities - Apply Today",
+            "⏰ Time-Sensitive Scholarships Available Now",
+            "🎯 Premium Scholarships with Upcoming Deadlines",
+        ],
+        "featured": [
+            "🏆 Featured Full-Ride Scholarships Available",
+            f"💫 This Week's Top {count} Scholarship Programs",
+            "🌟 Elite Scholarship Opportunities Alert",
+            "🎓 Premium International Scholarship Programs",
+        ],
+    }
+
+
+    # Combine all subject types with weights
+    weighted_subjects = (
+        subjects["standard"] * 3  # More weight to standard subjects
+        + subjects["urgent"]      # Less weight to urgent
+        + subjects["featured"]    # Less weight to featured
+    )
+
+    return random.choice(weighted_subjects)
+def get_internship_subject(count):
+    """Generate a random, engaging subject line for internship notifications"""
+    
+    subjects = {
+        "standard": [
+            f"💼 {count} New Internship Opportunities for You!",
+            f"🚀 {count} Internships Available - Apply Now!",
+            f"✨ {count} Fresh Internship Positions Just Added",
+            "🎯 Your Personalized Internship Matches Are Here",
+            "🌟 Today's Featured Internship Opportunities",
+            f"💡 {count} Internships That Match Your Profile",
+            "📊 Your Daily Internship Digest",
+            f"⭐ {count} Internships You Won't Want to Miss",
+            "🌍 Global Internship Opportunities Alert",
+            "📬 Your Customized Internship Update",
+        ],
+        "urgent": [
+            "⚡ Urgent: Internship Applications Closing Soon",
+            "🔥 Hot Internship Positions - Apply Today",
+            "⏰ Time-Sensitive Internship Openings",
+            "🎯 Premium Internships with Upcoming Deadlines",
+        ],
+        "featured": [
+            "🏢 Featured Paid Internships Available",
+            f"💫 This Week's Top {count} Internship Programs",
+            "🌟 Elite Internship Opportunities Alert",
+            "💼 Premium Corporate Internship Programs",
+        ],
+    }
+
+    # Combine all subject types with weights
+    weighted_subjects = (
+        subjects["standard"] * 3  # More weight to standard subjects
+        + subjects["urgent"]      # Less weight to urgent
+        + subjects["featured"]    # Less weight to featured
+    )
+
+    return random.choice(weighted_subjects)

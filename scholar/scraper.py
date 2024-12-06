@@ -68,6 +68,8 @@ class ScholarshipScraper:
                 collection_id="scholarships",
                 queries=[Query.equal("content_hash", content_hash)]
             )
+
+            print(result)
             
             # If no documents match the hash, the scholarship is new.
             return len(result.get("documents", [])) == 0
@@ -81,11 +83,11 @@ class ScholarshipScraper:
         async with self._semaphore:  # Limit concurrent requests
             try:
                 await self._throttle()  # Ensure rate limiting
-                logger.log(f"Fetching page {page}: {url}")
+                logger.info(f"Fetching page {page}: {url}")
                 client = await self.client
                 response = await client.get(url)
                 response.raise_for_status()
-                logger.log(response)
+                logger.info(response)
                 return response.text
             except Exception as e:
                 logger.error(f"Error fetching page {page}: {str(e)}")
@@ -120,9 +122,9 @@ class ScholarshipScraper:
                 document_id=self.generate_scholarship_id(scholarship_text),
                 data=document_data
             )
-            logger.log(f"Saved scholarship: {title}")
+            logger.info(f"Saved scholarship: {title}")
         except Exception as e:
-            logger.log(f"Error saving scholarship: {str(e)}")
+            logger.error(f"Error saving scholarship: {str(e)}")
 
     def generate_scholarship_id(self, scholarship):
         """Generate a unique ID for a scholarship"""
@@ -188,7 +190,7 @@ class ScholarshipScraper:
                         try:
                             processed_content = await self.parse_with_llm(scholarship['content'])
                         except Exception as e:
-                            logger.log(f"Error processing scholarship: {str(e)}")
+                            logger.error(f"Error processing scholarship: {str(e)}")
                             continue
                         
                         # Clean and update the scholarship

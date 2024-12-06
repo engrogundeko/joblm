@@ -1,6 +1,3 @@
-
-
-
 list_scholar_4_dev = """
 You are an expert at extracting structured masters scholarship information from text.
 
