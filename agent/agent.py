@@ -18,7 +18,7 @@ llm_llama = ChatGroq(
     # other params...
 )
 llm_mixtra = ChatGroq(
-    model="llama3-groq-70b-8192-tool-use-preview",
+    model="llama3-groq-8b-8192-tool-use-preview",
     # model="gemma2-7b-it",
     temperature=0,
     max_tokens=None,
