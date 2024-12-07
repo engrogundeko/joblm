@@ -87,9 +87,9 @@ async def ping_server():
         try:
             res = await client.get(endpoint)
             logger.info(f"Pinged {endpoint} - Status Code: {res.status_code}")
+            return res
         except Exception as e:
             logger.error(f"Failed to ping {endpoint}: {e}")
-    return res
 
 
 async def periodic_ping():
