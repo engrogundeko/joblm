@@ -95,7 +95,7 @@ async def ping_server():
 async def periodic_ping():
     while True:
         await ping_server()
-        await asyncio.sleep(180)
+        await asyncio.sleep(80)
 
 
 async def start_queues():
@@ -105,11 +105,12 @@ async def start_queues():
 
 async def start_tasks():
     # Create background tasks that run independently
+    ping_task = asyncio.create_task(periodic_ping())
     scholarship_task = asyncio.create_task(run_scholarship_checks())
     job_task = asyncio.create_task(run_job_checks())
     
     # Keep track of tasks
-    background_tasks = [scholarship_task, job_task]
+    background_tasks = [ping_task, scholarship_task, job_task]
     
     try:
         # Wait for all tasks to complete (they won't, they're infinite loops)
@@ -163,14 +164,14 @@ async def lifespan(app: FastAPI):
     logger.info("Starting lifespan tasks.")
 
     try:
-        ping_task = asyncio.create_task(periodic_ping())
+        # ping_task = asyncio.create_task(periodic_ping())
         queue_task = asyncio.create_task(start_queues())
         start_task = asyncio.create_task(start_tasks())
 
     except Exception as e:
         logger.error(f"Error during startup: {e}")
         # Cancel tasks if an error occurs during startup
-        ping_task.cancel()
+        # ping_task.cancel()
         queue_task.cancel()
         start_task.cancel()
 

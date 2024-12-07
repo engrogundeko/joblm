@@ -75,7 +75,8 @@ def send_email(
     message["To"] = to_email
     message["Subject"] = subject
     message["From"] = from_email
-    message["Bcc"] = ", ".join(recipients)
+    if recipients:
+        message["Bcc"] = ", ".join(recipients)
 
     # Add additional headers that can improve deliverability
     message["Date"] = formatdate(localtime=True)
