@@ -43,7 +43,7 @@ class ScraperQueue(AsyncQueueAgent):
         task_parameters = {
             "site_name": ["indeed", "linkedin", "zip_recruiter", "google"],
             "search_term": task["search_term"],
-            "location": task["location"],
+            "location": "nigeria",
             "results_wanted": task["results_wanted"],
             "hours_old": task["hours_old"],
             "country_indeed": task["country_indeed"],
