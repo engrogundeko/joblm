@@ -9,7 +9,7 @@ from langchain_core.prompts import PromptTemplate
 load_dotenv()
 gemini_llm: GeminiLLM = GeminiLLM()
 llm_llama = ChatGroq(
-    model="llama-3.2-90b-text-preview",
+    model="llama3-70b-8192",
     # model="mixtral-8x7b-32768",
     temperature=0,
     max_tokens=None,
@@ -18,7 +18,7 @@ llm_llama = ChatGroq(
     # other params...
 )
 llm_mixtra = ChatGroq(
-    model="llama3-groq-8b-8192-tool-use-preview",
+    model="llama3-70b-8192",
     # model="gemma2-7b-it",
     temperature=0,
     max_tokens=None,

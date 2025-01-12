@@ -20,7 +20,7 @@ class MyDeps:
 scholarship_agent = Agent(
     retries=3,
     system_prompt=scholar_template,
-    model="groq:llama3-groq-70b-8192-tool-use-preview",
+    model="groq:llama3-70b-8192",
     result_type=Scholarship
     
 )
