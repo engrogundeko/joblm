@@ -36,7 +36,7 @@ scholarship_agent = Agent(
 master_list_agent = Agent(
     retries=3,
     system_prompt=list_scholar_4_dev,
-    model="groq:llama3-groq-8b-8192",
+    model="groq:llama3-groq-70b-8192",
     result_type=ListScholar4Dev,
     deps_type=MyDeps
     )
