@@ -74,7 +74,7 @@ def send_email(
     message = MIMEMultipart("alternative")
     message["To"] = to_email
     message["Subject"] = subject
-    message["From"] = from_email
+    message["From"] = "JobLM"
     if recipients:
         message["Bcc"] = ", ".join(recipients)
 

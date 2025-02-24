@@ -25,53 +25,57 @@ class Scholarship4Dev(ScholarshipScraper):
 
     async def parse_scholarship_list_llm(self, soup):
         scholarship = self.to_markdown(soup)
-        # for scholarship in scholarships:
+        if not scholarship:
+            return []
         try:
             processed_content = await run_scholarship_list(scholarship)
-
-            pprint(processed_content)
-            return processed_content["scholarships"]
+            if not processed_content or not isinstance(processed_content, dict):
+                return []
+            return processed_content.get("scholarships", [])
         except Exception as e:
-            print(f"Error processing scholarship: {str(e)}")
+            print(f"Error processing scholarship list: {str(e)}")
+            return []
             
 
     async def parse_scholarship(self, soup):
         scholarships = await self.parse_scholarship_list_llm(soup)
+        if not scholarships:
+            return []
 
         all_detailed_scholarships = []
         for scholarship in scholarships:
+            if not isinstance(scholarship, dict):
+                continue
+                
             url = scholarship.get("link", "")
+            if not url:
+                continue
             
             client = await self.client
             try:
                 response = await client.get(url)
-            except Exception as e:
-                print(f"Error fetching scholarship: {str(e)}")
-                continue
+                html_content = response.text
+                soup = BeautifulSoup(html_content, 'html.parser')
+                
+                content = self.to_markdown(soup, class_name="entry clearfix")
+                if not content:
+                    continue
 
-            html_content = response.text
-            soup = BeautifulSoup(html_content, 'html.parser')
-            
-            content = self.to_markdown(soup, class_name="entry clearfix")
-            if not content:
-                continue
-
-            try:
                 processed_content = await run_scholarship(content)
                 if processed_content and isinstance(processed_content, dict):
                     scholarship_detail = {
-                        'title': scholarship['title'],
+                        'title': scholarship.get('title', ''),
                         'link': url,
                         'content': processed_content.get('content', ''),
                         'application_link': processed_content.get('application_link', '')
                     }
-                    all_detailed_scholarships.append(scholarship_detail)
+                    if all(scholarship_detail.values()):
+                        all_detailed_scholarships.append(scholarship_detail)
 
             except Exception as e:
-                print(f"Error processing scholarship: {str(e)}")
+                print(f"Error processing scholarship detail: {str(e)}")
                 continue
 
-            all_detailed_scholarships.append(scholarship)
         return all_detailed_scholarships
 
         

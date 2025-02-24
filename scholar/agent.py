@@ -14,13 +14,13 @@ load_dotenv()
 @dataclass
 class MyDeps:  
     http_client: httpx.AsyncClient
-    api_key: str = os.getenv("GROQ_API_KEY")
+    api_key: str = os.getenv("GEMINI_API_KEY")
 
 
 scholarship_agent = Agent(
     retries=3,
     system_prompt=scholar_template,
-    model="groq:llama3-70b-8192",
+    model='gemini-1.5-flash',
     result_type=Scholarship
     
 )
@@ -36,7 +36,7 @@ scholarship_agent = Agent(
 master_list_agent = Agent(
     retries=3,
     system_prompt=list_scholar_4_dev,
-    model="groq:llama3-70b-8192",
+    model="gemini-1.5-flash",
     result_type=ListScholar4Dev,
     deps_type=MyDeps
     )

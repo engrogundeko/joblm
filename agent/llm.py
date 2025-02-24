@@ -170,6 +170,7 @@ class GeminiLLM(LLM):
     def init_model(self, model_name: str):  # Changed parameter type hint
         llm = ChatGoogleGenerativeAI(
             model=model_name,
+            api_key=os.getenv("GEMINI_API_KEY"),
             temperature=0,
             max_tokens=None,
             timeout=None,

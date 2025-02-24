@@ -8,24 +8,28 @@ from langchain_core.prompts import PromptTemplate
 
 load_dotenv()
 gemini_llm: GeminiLLM = GeminiLLM()
-llm_llama = ChatGroq(
-    model="llama3-70b-8192",
-    # model="mixtral-8x7b-32768",
-    temperature=0,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2,
-    # other params...
-)
-llm_mixtra = ChatGroq(
-    model="llama3-70b-8192",
-    # model="gemma2-7b-it",
-    temperature=0,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2,
-    # other params...
-)
+
+llm_llama = gemini_llm.init_model("gemini-1.5-flash")
+# llm_llama = ChatGroq(
+#     model="llama3-70b-8192",
+#     # model="mixtral-8x7b-32768",
+#     temperature=0,
+#     max_tokens=None,
+#     timeout=None,
+#     max_retries=2,
+#     # other params...
+# )
+# llm_mixtra = ChatGroq(
+#     model="llama3-70b-8192",
+#     # model="gemma2-7b-it",
+#     temperature=0,
+#     max_tokens=None,
+#     timeout=None,
+#     max_retries=2,
+#     # other params...
+# )
+
+llm_mixtra = llm_llama
 
 
 def to_dict(arg):

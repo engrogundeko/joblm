@@ -12,10 +12,25 @@ async def get_all_users():
         limit: Maximum number of users to return (default: 100)
     """
     try:
+        user_list = []
+        limit = 100
+        offset = 0
+        queries = [
+            Query.limit(limit)
+        ]
         # List users with pagination
-        users = appwrite_client.users.list()
+        users = appwrite_client.users.list(queries=queries)
+        # while True:
+        #     users = appwrite_client.users.list(queries=queries)
+        #     queries[1] = Query.offset(offset)
+        #     offset += limit
+        #     if len(users['users']) == 0:
+        #         break
 
-        return users["users"]  # Returns list of user objects
+        #     user_list.extend(users["users"])
+
+        # print(f"Total Users {len(user_list)}")
+        return users['users']
 
     except Exception as e:
         print(f"Error getting users: {str(e)}")
