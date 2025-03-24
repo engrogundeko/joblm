@@ -10,6 +10,13 @@ import httpx
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+PROXY_URL = os.getenv("PROXY_URL")
+
 db = AppwriteClient()
 
 class ScholarshipScraper:
@@ -25,15 +32,26 @@ class ScholarshipScraper:
     async def client(self):
         """Lazy initialize the httpx client"""
         if self._client is None:
+            # Update proxy configuration to use the correct format for httpx
+            # The format is {"http://": proxy_url, "https://": proxy_url}
+            if PROXY_URL:
+                proxy_config = {
+                    "http://": PROXY_URL,
+                    "https://": PROXY_URL
+                }
+            else:
+                proxy_config = None
+                
             self._client = httpx.AsyncClient(
                 timeout=30.0,
                 follow_redirects=True,  # Handle redirects automatically
                 verify=True,  # Verify SSL certificates
                 http2=True,  # Enable HTTP/2 support
+                proxies=proxy_config,
                 limits=httpx.Limits(
                     max_keepalive_connections=5,
                     max_connections=10,
-                    keepalive_expiry=30.0
+                    keepalive_expiry=30.0,
                 )
             )
         return self._client
@@ -78,20 +96,25 @@ class ScholarshipScraper:
             return True
 
     async def get_page(self, page=1):
-        """Fetch a specific page of scholarships with rate limiting"""
+        """Fetch a specific page of scholarships with rate limiting using a proxy"""
         url = self.base_url if page == 1 else f"{self.base_url}/page/{page}"
+        # proxy_url = PROXY_URL  # Replace with your actual proxy
+
         async with self._semaphore:  # Limit concurrent requests
             try:
                 await self._throttle()  # Ensure rate limiting
-                logger.info(f"Fetching page {page}: {url}")
+                logger.info(f"Fetching page {page} via proxy: {url}")
+
                 client = await self.client
                 response = await client.get(url)
                 response.raise_for_status()
+                
                 logger.info(response)
                 return response.text
             except Exception as e:
                 logger.error(f"Error fetching page {page}: {str(e)}")
                 return None
+
 
     async def get_page_contents(self, max_pages=3):
         """Get contents of multiple pages with rate limiting"""
