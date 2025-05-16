@@ -140,7 +140,7 @@ async def run_job_checks():
             logger.info(f"Fetched {len(users)} resumes from user collection.")
             
             if users:
-                for user in users:
+                for user in users:    
                     userId = user["$id"]
                     resume_txt = get_user_resume(userId)
                     if resume_txt:
@@ -178,10 +178,10 @@ async def lifespan(app: FastAPI):
     yield
 
     # Clean up by cancelling the tasks on shutdown
-    ping_task.cancel()
+    # ping_task.cancel()
     queue_task.cancel()
     start_task.cancel()
-    await asyncio.gather(ping_task, queue_task, start_task, return_exceptions=True)
+    await asyncio.gather(queue_task, start_task, return_exceptions=True)
 
     logger.info("Lifespan tasks cancelled on shutdown.")
 
