@@ -1,6 +1,7 @@
 import asyncio
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
+from urllib.parse import quote
 
 # Initialize result storage as a list of dictionaries
 results = {
@@ -61,7 +62,9 @@ async def scrape_pages(query: str, pages: int):
     tasks = []
     async with ClientSession() as session:
         for i in range(1, pages + 1):
-            url = base_url.format(query=query, page=i)
+            # Properly encode the query parameter
+            encoded_query = quote(query)
+            url = base_url.format(query=encoded_query, page=i)
             tasks.append(parse_page(session, url))
             await asyncio.sleep(REQUEST_DELAY)  # Respect rate limit
 
