@@ -11,7 +11,7 @@ from pprint import pprint
 class Scholarship4Dev(ScholarshipScraper):
     def __init__(self):
         super().__init__()
-        self.base_url = "https://www.scholars4dev.com/category/level-of-study/masters-scholarships"
+        self.base_url = "https://www.scholars4dev.com/category/level-of-study/masters-scholarships/"
 
 
     def to_markdown(self, html_content: BeautifulSoup, class_name="post clearfix"):

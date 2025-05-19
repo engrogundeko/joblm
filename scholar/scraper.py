@@ -1,5 +1,6 @@
 import hashlib
 import asyncio
+from urllib.parse import urljoin
 
 from log import logger
 from .agent import run_scholarship
@@ -97,8 +98,11 @@ class ScholarshipScraper:
 
     async def get_page(self, page=1):
         """Fetch a specific page of scholarships with rate limiting using a proxy"""
-        url = self.base_url if page == 1 else f"{self.base_url}/page/{page}"
-        # proxy_url = PROXY_URL  # Replace with your actual proxy
+        # Properly construct the URL using urljoin
+        if page == 1:
+            url = self.base_url
+        else:
+            url = urljoin(self.base_url, f"page/{page}/")
 
         async with self._semaphore:  # Limit concurrent requests
             try:
