@@ -3,6 +3,7 @@ import pandas as pd
 import pprint
 from bs4 import BeautifulSoup
 import requests
+from urllib.parse import urljoin, quote
 
 
 def get_name(scholarship):
@@ -52,8 +53,11 @@ def get_start(scholarship):
 
 pages = [str(i) for i in range(1, 2)]
 scholarships_list = []
+base_url = "https://www.scholars4dev.com/category/level-of-study/masters-scholarships/"
 for page in pages:
-    URL = "https://www.scholars4dev.com/category/level-of-study/masters-scholarships/"+page+'/'
+    # Properly construct and encode the URL
+    page_path = quote(page) + '/'
+    URL = urljoin(base_url, page_path)
     print(URL)
     r = requests.get(URL)
 
