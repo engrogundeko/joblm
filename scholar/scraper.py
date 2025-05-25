@@ -44,7 +44,7 @@ class ScholarshipScraper:
                 proxy_config = None
                 
             self._client = httpx.AsyncClient(
-                timeout=30.0,
+                timeout=60.0,  # Increased timeout
                 follow_redirects=True,  # Handle redirects automatically
                 verify=True,  # Verify SSL certificates
                 http2=True,  # Enable HTTP/2 support
@@ -53,6 +53,11 @@ class ScholarshipScraper:
                     max_keepalive_connections=5,
                     max_connections=10,
                     keepalive_expiry=30.0,
+                ),
+                # Add retry mechanism
+                transport=httpx.AsyncHTTPTransport(
+                    retries=3,  # Number of retries
+                    verify=True,
                 )
             )
         return self._client
@@ -67,9 +72,11 @@ class ScholarshipScraper:
             self._client = None
 
     async def _throttle(self):
-        """Ensure requests are throttled to 3 per second"""
+        """Ensure requests are throttled to avoid rate limiting"""
         current_time = asyncio.get_event_loop().time()
         time_since_last = current_time - self._last_request_time
+        # Increase the interval between requests to avoid rate limiting
+        self.request_interval = 2  # 1 request per 2 seconds
         if time_since_last < self.request_interval:
             await asyncio.sleep(self.request_interval - time_since_last)
         self._last_request_time = asyncio.get_event_loop().time()
@@ -104,20 +111,36 @@ class ScholarshipScraper:
         else:
             url = urljoin(self.base_url, f"page/{page}/")
 
-        async with self._semaphore:  # Limit concurrent requests
-            try:
-                await self._throttle()  # Ensure rate limiting
-                logger.info(f"Fetching page {page} via proxy: {url}")
+        max_retries = 3
+        retry_delay = 5  # seconds
+        
+        for attempt in range(max_retries):
+            async with self._semaphore:  # Limit concurrent requests
+                try:
+                    await self._throttle()  # Ensure rate limiting
+                    logger.info(f"Fetching page {page} via proxy: {url} (Attempt {attempt + 1}/{max_retries})")
 
-                client = await self.client
-                response = await client.get(url)
-                response.raise_for_status()
-                
-                logger.info(response)
-                return response.text
-            except Exception as e:
-                logger.error(f"Error fetching page {page}: {str(e)}")
-                return None
+                    client = await self.client
+                    response = await client.get(url)
+                    response.raise_for_status()
+                    
+                    logger.info(f"Successfully fetched page {page}")
+                    return response.text
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code == 429:  # Too Many Requests
+                        logger.warning(f"Rate limited on attempt {attempt + 1}. Waiting {retry_delay} seconds...")
+                        await asyncio.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                        continue
+                    logger.error(f"HTTP error fetching page {page}: {str(e)}")
+                    return None
+                except Exception as e:
+                    logger.error(f"Error fetching page {page}: {str(e)}")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                        continue
+                    return None
 
 
     async def get_page_contents(self, max_pages=3):

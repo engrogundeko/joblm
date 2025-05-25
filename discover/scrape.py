@@ -46,16 +46,45 @@ class DiscoverHubScraper:
         logger.info("DiscoverHubScraper initialized with URLs: %s", self.BASE_URLS)
 
     async def fetch(self, url):
-        try:
-            logger.info("Fetching URL: %s", url)
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url)
-                response.raise_for_status()  # Will raise an error for bad status codes
-                return response
-        except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error occurred while fetching {url}: {e}")
-        except Exception as e:
-            logger.error(f"Error occurred while fetching {url}: {e}")
+        max_retries = 3
+        retry_delay = 5  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Fetching URL: {url} (Attempt {attempt + 1}/{max_retries})")
+                async with httpx.AsyncClient(
+                    timeout=60.0,
+                    follow_redirects=True,
+                    verify=True,
+                    http2=True,
+                    transport=httpx.AsyncHTTPTransport(
+                        retries=2,  # Number of retries
+                        verify=True,
+                    )
+                ) as client:
+                    response = await client.get(url)
+                    response.raise_for_status()  # Will raise an error for bad status codes
+                    logger.info(f"Successfully fetched URL: {url}")
+                    return response
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 429:  # Too Many Requests
+                    logger.warning(f"Rate limited on attempt {attempt + 1}. Waiting {retry_delay} seconds...")
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                logger.error(f"HTTP error occurred while fetching {url}: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                return None
+            except Exception as e:
+                logger.error(f"Error occurred while fetching {url}: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                return None
 
     async def fetch_data(self):
         tasks = [self.fetch(url) for url in self.BASE_URLS]

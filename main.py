@@ -83,13 +83,43 @@ async def signup(email: str = Form(...), pdf: UploadFile = File(...)):
 
 async def ping_server():
     endpoint = "https://joblm.onrender.com/ping"
-    async with httpx.AsyncClient() as client:
+    max_retries = 3
+    retry_delay = 5  # seconds
+    
+    for attempt in range(max_retries):
         try:
-            res = await client.get(endpoint)
-            logger.info(f"Pinged {endpoint} - Status Code: {res.status_code}")
-            return res
+            async with httpx.AsyncClient(
+                timeout=30.0,
+                follow_redirects=True,
+                verify=True,
+                http2=True,
+                transport=httpx.AsyncHTTPTransport(
+                    retries=2,  # Number of retries
+                    verify=True,
+                )
+            ) as client:
+                res = await client.get(endpoint)
+                logger.info(f"Pinged {endpoint} - Status Code: {res.status_code}")
+                return res
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:  # Too Many Requests
+                logger.warning(f"Rate limited on attempt {attempt + 1}. Waiting {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            logger.error(f"HTTP error pinging {endpoint}: {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            raise
         except Exception as e:
             logger.error(f"Failed to ping {endpoint}: {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            raise
 
 
 async def periodic_ping():

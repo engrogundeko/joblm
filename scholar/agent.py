@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from .schema import Scholarship, ListScholar4Dev
 from dotenv import load_dotenv
 from pprint import pprint
+from log import logger
 load_dotenv()
 
 
@@ -64,32 +65,95 @@ def to_dict(obj):
             return obj
 
 async def run_scholarship(prompt: str):
-    async with httpx.AsyncClient() as client:
-        deps = MyDeps(http_client=client)
-        await asyncio.sleep(5)
-        result = await scholarship_agent.run(
-            user_prompt=prompt,
-            deps=deps,  
-        )
+    max_retries = 3
+    retry_delay = 5  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            async with httpx.AsyncClient(
+                timeout=60.0,
+                follow_redirects=True,
+                verify=True,
+                http2=True,
+                transport=httpx.AsyncHTTPTransport(
+                    retries=2,  # Number of retries
+                    verify=True,
+                )
+            ) as client:
+                deps = MyDeps(http_client=client)
+                await asyncio.sleep(5)
+                result = await scholarship_agent.run(
+                    user_prompt=prompt,
+                    deps=deps,  
+                )
 
-        formatted_result = to_dict(result.data)
-
-
-        return formatted_result
+                formatted_result = to_dict(result.data)
+                return formatted_result
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:  # Too Many Requests
+                logger.warning(f"Rate limited on attempt {attempt + 1}. Waiting {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            logger.error(f"HTTP error in run_scholarship: {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            raise
+        except Exception as e:
+            logger.error(f"Error in run_scholarship: {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            raise
 
 
 async def run_scholarship_list(prompt: str):
-    async with httpx.AsyncClient() as client:
-        deps = MyDeps(http_client=client)
-        await asyncio.sleep(5)
-        result = await master_list_agent.run(
-            user_prompt=prompt,
-            deps=deps,  
-        )
+    max_retries = 3
+    retry_delay = 5  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            async with httpx.AsyncClient(
+                timeout=60.0,
+                follow_redirects=True,
+                verify=True,
+                http2=True,
+                transport=httpx.AsyncHTTPTransport(
+                    retries=2,  # Number of retries
+                    verify=True,
+                )
+            ) as client:
+                deps = MyDeps(http_client=client)
+                await asyncio.sleep(5)
+                result = await master_list_agent.run(
+                    user_prompt=prompt,
+                    deps=deps,  
+                )
 
-        formatted_result = to_dict(result.data)
-
-        return formatted_result
+                formatted_result = to_dict(result.data)
+                return formatted_result
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:  # Too Many Requests
+                logger.warning(f"Rate limited on attempt {attempt + 1}. Waiting {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            logger.error(f"HTTP error in run_scholarship_list: {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            raise
+        except Exception as e:
+            logger.error(f"Error in run_scholarship_list: {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            raise
 
 
 
