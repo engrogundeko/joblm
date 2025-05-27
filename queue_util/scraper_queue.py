@@ -41,7 +41,7 @@ class ScraperQueue(AsyncQueueAgent):
         task_id = scraper_task["id"]
         # Define the task parameters for scraping jobs
         task_parameters = {
-            "site_name": ["indeed", "linkedin", "zip_recruiter", "google"],
+            "site_name": ["indeed", "linkedin", "zip_recruiter"],
             "search_term": task["search_term"],
             "location": "nigeria",
             "results_wanted": task["results_wanted"],
